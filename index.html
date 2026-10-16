@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleKıyas - 2026 Akıllı Telefon Karşılaştırma Platformu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        darkbg: '#090d16',
+                        darkcard: '#111827',
+                        darkborder: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sticky-device-header {
+            position: sticky;
+            top: 64px;
+            z-index: 25;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+
+        .spec-row:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.015);
+        }
+
+        .spec-row:hover {
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        @media print {
+            header, .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .sticky-device-header {
+                position: static !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-slate-100 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-medium">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-msg">İşlem başarıyla tamamlandı.</span>
+    </div>
+
+    <!-- NAVBAR -->
+    <header class="h-16 bg-darkcard/90 backdrop-blur-md border-b border-darkborder sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between no-print">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-brand-600 to-indigo-400 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-500/30">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+                <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-brand-500 bg-clip-text text-transparent">TeleKıyas</span>
+                <span class="text-xs font-bold text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded-md border border-brand-500/20 ml-1.5">2026 FLEET</span>
+            </div>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <button onclick="toggleFavoritesView()" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 transition-all flex items-center space-x-1.5">
+                <i class="fa-solid fa-star"></i>
+                <span class="hidden sm:inline">Favorilerim</span>
+                <span id="fav-count" class="bg-amber-400/20 text-amber-300 text-xs px-1.5 py-0.5 rounded-full ml-1 font-bold">0</span>
+            </button>
+
+            <button onclick="openCustomPhoneModal()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-plus text-brand-500"></i>
+                <span class="hidden sm:inline">Özel Cihaz Ekle</span>
+                <span class="sm:hidden">Ekle</span>
+            </button>
+
+            <button onclick="window.print()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all" title="Yazdır / PDF Al">
+                <i class="fa-solid fa-print"></i>
+            </button>
+
+            <button onclick="shareComparison()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/25 transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span class="hidden sm:inline">Paylaş</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-6 py-6 flex flex-col gap-6">
+
+        <!-- TOP CONTROLS & PRESETS -->
+        <div class="bg-darkcard border border-darkborder rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 no-print">
+            
+            <!-- Quick Presets -->
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider mr-1">Popüler Karşılaştırmalar:</span>
+                <button onclick="loadPreset(['iphone-18-pro-max', 's26-ultra'])" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/80 hover:bg-brand-600/20 hover:border-brand-500/40 border border-slate-700 text-slate-300 transition-all">
+                    🔥 iPhone 18 Pro Max vs S26 Ultra
+                </button>
+                <button onclick="loadPreset(['xiaomi-18-pro-max', 's26-ultra', 'huawei-p80-pro'])" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/80 hover:bg-brand-600/20 hover:border-brand-500/40 border border-slate-700 text-slate-300 transition-all">
+                    📸 Kamera Devleri
+                </button>
+                <button onclick="loadPreset(['pixel-11-pro', 'oneplus-13-pro', 'iphone-18-pro-max'])" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/80 hover:bg-brand-600/20 hover:border-brand-500/40 border border-slate-700 text-slate-300 transition-all">
+                    ⚡ 2026 Performans Kralları
+                </button>
+            </div>
+
+            <!-- Global Controls Switchers -->
+            <div class="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-slate-800">
+                <!-- Highlight Winner Toggle -->
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-highlights" checked onchange="renderComparison()" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-slate-300 flex items-center">
+                        <i class="fa-solid fa-trophy text-amber-400 mr-1.5"></i> Kazananı Vurgula
+                    </span>
+                </label>
+
+                <!-- Only Differences Toggle -->
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-diff" onchange="renderComparison()" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-slate-300">Sadece Farklar</span>
+                </label>
+
+                <!-- Reset All Button -->
+                <button onclick="resetComparison()" class="p-2 text-slate-400 hover:text-rose-400 transition-colors" title="Karşılaştırmayı Temizle">
+                    <i class="fa-solid fa-rotate-left text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- COMPARISON TABLE CONTAINER -->
+        <div id="comparison-container" class="bg-darkcard border border-darkborder rounded-3xl shadow-2xl overflow-x-auto relative">
+            <!-- Rendered Dynamically via JS -->
+        </div>
+
+    </main>
+
+    <!-- MODAL: PHONE SEARCH / SELECTOR -->
+    <div id="search-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-darkcard border border-darkborder w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-5 border-b border-darkborder flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center">
+                    <i class="fa-solid fa-mobile-button text-brand-500 mr-2.5"></i> Telefon Seç veya Değiştir
+                </h3>
+                <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Search Inputs & Filters -->
+            <div class="p-4 border-b border-darkborder space-y-3 bg-slate-900/50">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-500"></i>
+                    <input type="text" id="phone-search-input" onkeyup="filterPhonesList()" placeholder="Marka veya model arayın (Örn: iPhone 18, S26 Ultra, Xiaomi)..." class="w-full pl-11 pr-4 py-3 bg-darkbg border border-darkborder rounded-2xl text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium placeholder-slate-500">
+                </div>
+                <!-- Brand Filter Pills -->
+                <div class="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
+                    <button onclick="filterBrand('Tümü')" class="brand-pill active px-3 py-1.5 rounded-xl bg-brand-600 text-white font-semibold transition-all">Tümü</button>
+                    <button onclick="filterBrand('Apple')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Apple</button>
+                    <button onclick="filterBrand('Samsung')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Samsung</button>
+                    <button onclick="filterBrand('Xiaomi')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Xiaomi</button>
+                    <button onclick="filterBrand('Google')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Google</button>
+                    <button onclick="filterBrand('OnePlus')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">OnePlus</button>
+                    <button onclick="filterBrand('Huawei')" class="brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Huawei</button>
+                </div>
+            </div>
+
+            <!-- Phone Results List -->
+            <div id="phone-results-list" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DEVICE DETAIL BREAKDOWN -->
+    <div id="detail-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-darkcard border border-darkborder w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div id="detail-modal-content">
+                <!-- Dynamically Filled -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CUSTOM PHONE FORM -->
+    <div id="custom-phone-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-darkcard border border-darkborder w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-darkborder flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center">
+                    <i class="fa-solid fa-plus-circle text-emerald-400 mr-2.5"></i> Özel Cihaz Oluştur & Karşılaştır
+                </h3>
+                <button onclick="closeCustomPhoneModal()" class="text-slate-400 hover:text-white transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCustomPhoneSubmit(event)" class="p-6 overflow-y-auto space-y-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Marka</label>
+                        <input type="text" id="cust-brand" required placeholder="Örn: Nothing" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Model Adı</label>
+                        <input type="text" id="cust-name" required placeholder="Örn: Phone (3a) Ultra" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Tahmini Fiyat</label>
+                        <input type="text" id="cust-price" placeholder="Örn: $1,100 / ₺85.000" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">İşlemci (Chipset)</label>
+                        <input type="text" id="cust-chipset" placeholder="Örn: Snapdragon 8 Elite Gen 5" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">RAM (GB)</label>
+                        <input type="number" id="cust-ram" placeholder="16" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Batarya (mAh)</label>
+                        <input type="number" id="cust-battery" placeholder="5500" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Ekran Boyutu & Yenileme</label>
+                        <input type="text" id="cust-screen" placeholder="6.8 inç OLED 144Hz" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Ana Kamera (MP)</label>
+                        <input type="text" id="cust-camera" placeholder="200 MP OIS" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">AnTuTu v10 Puanı</label>
+                        <input type="number" id="cust-antutu" placeholder="2800000" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Şarj Hızı (W)</label>
+                        <input type="number" id="cust-charge" placeholder="100" class="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-slate-100">
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="closeCustomPhoneModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">İptal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-500 shadow-lg shadow-brand-600/20">Kaydet ve Karşılaştır</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. 2026 Smartphone Database ---
+        const phoneDatabase = [
+            {
+                id: 'iphone-18-pro-max',
+                brand: 'Apple',
+                name: 'iPhone 18 Pro Max',
+                price: '₺119.999 / $1,299',
+                releaseDate: 'Eylül 2026',
+                image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&auto=format&fit=crop&q=80',
+                overallScore: 98,
+                pros: ['A20 Pro 2nm Çip Performansı', '8x Optik Periskop Kamera', 'iOS 27 Yapay Zeka Entegrasyonu'],
+                cons: ['Yüksek Fiyat', 'Hızlı Şarj Rakip Modellere Göre Geride'],
+                specs: {
+                    weight: { val: 221, display: '221 gram' },
+                    thickness: { val: 8.1, display: '8.1 mm' },
+                    build: { display: 'Sınıf 5 Titanyum + Ceramic Shield 2' },
+                    ipRating: { display: 'IP68 (6m / 30dk)' },
+                    screenSize: { val: 6.9, display: '6.9 inç LTPO Super Retina XDR' },
+                    refreshRate: { val: 120, display: '120Hz ProMotion (1-120Hz)' },
+                    peakBrightness: { val: 3200, display: '3200 nits Peak' },
+                    chipset: { display: 'Apple A20 Pro (2 nm)' },
+                    ram: { val: 12, display: '12 GB Unified RAM' },
+                    storage: { display: '256GB / 512GB / 1TB / 2TB' },
+                    antutu: { val: 2950000, display: '2.950.000' },
+                    mainCamera: { display: '48 MP Fusion OIS (f/1.6)' },
+                    telephoto: { display: '48 MP Periskop (8x Optik Zoom)' },
+                    ultrawide: { display: '48 MP Ultra Geniş (120°)' },
+                    frontCamera: { display: '24 MP TrueDepth (Autofocus)' },
+                    dxomark: { val: 168, display: '168 Puan' },
+                    battery: { val: 5200, display: '5.200 mAh' },
+                    chargingSpeed: { val: 60, display: '60W Kablolu (%50 - 18dk)' },
+                    wirelessCharging: { val: 30, display: '30W MagSafe / Qi2' },
+                    os: { display: 'iOS 27' },
+                    updateSupport: { val: 7, display: '7 Yıl Güncelleme' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.4, USB-C 4.0, eSIM' }
+                }
+            },
+            {
+                id: 's26-ultra',
+                brand: 'Samsung',
+                name: 'Galaxy S26 Ultra',
+                price: '₺98.999 / $1,299',
+                releaseDate: 'Ocak 2026',
+                image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&auto=format&fit=crop&q=80',
+                overallScore: 97,
+                pros: ['200 MP Gelişmiş Sensör & S-Pen Entegre', 'Gizlilik Korumalı Ekran Teknolojisi', '7 Yıl Tam OS Desteği'],
+                cons: ['Gövde Biraz Geniş ve Ağır'],
+                specs: {
+                    weight: { val: 228, display: '228 gram' },
+                    thickness: { val: 8.4, display: '8.4 mm' },
+                    build: { display: 'Gelişmiş Titanyum, Gorilla Armor 2' },
+                    ipRating: { display: 'IP68 (1.5m / 30dk)' },
+                    screenSize: { val: 6.9, display: '6.9 inç Dynamic AMOLED 2X' },
+                    refreshRate: { val: 120, display: '1-120Hz LTPO' },
+                    peakBrightness: { val: 3500, display: '3500 nits Peak' },
+                    chipset: { display: 'Snapdragon 8 Elite Gen 5 (3 nm)' },
+                    ram: { val: 16, display: '16 GB LPDDR5X' },
+                    storage: { display: '256GB / 512GB / 1TB UFS 4.1' },
+                    antutu: { val: 3100000, display: '3.100.000' },
+                    mainCamera: { display: '200 MP, f/1.7, OIS, Laser AF' },
+                    telephoto: { display: '50 MP (5x Optik) + 50 MP (10x Optik)' },
+                    ultrawide: { display: '50 MP Ultra Geniş' },
+                    frontCamera: { display: '12 MP Dual Pixel' },
+                    dxomark: { val: 165, display: '165 Puan' },
+                    battery: { val: 5000, display: '5.000 mAh' },
+                    chargingSpeed: { val: 60, display: '60W Hızlı Şarj' },
+                    wirelessCharging: { val: 25, display: '25W Wireless + Ters Şarj' },
+                    os: { display: 'Android 16 (One UI 8.0 AI)' },
+                    updateSupport: { val: 7, display: '7 Yıl OS & Güvenlik' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.4, S-Pen Entegre, USB 3.2' }
+                }
+            },
+            {
+                id: 'xiaomi-18-pro-max',
+                brand: 'Xiaomi',
+                name: 'Xiaomi 18 Pro Max',
+                price: '₺79.999 / $1,199',
+                releaseDate: 'Şubat 2026',
+                image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&auto=format&fit=crop&q=80',
+                overallScore: 96,
+                pros: ['90W Şarj & 6000 mAh Silikon Anot Pil', 'Leica 200 MP Kamera Donanımı', '144Hz LTPO Ekran'],
+                cons: ['Arayüzde Önceden Yüklü Uygulamalar'],
+                specs: {
+                    weight: { val: 218, display: '218 gram' },
+                    thickness: { val: 8.9, display: '8.9 mm' },
+                    build: { display: 'Seramik / Deri Arka Yüzey, Dragon Crystal Glass 2' },
+                    ipRating: { display: 'IP68' },
+                    screenSize: { val: 6.73, display: '6.73 inç LTPO AMOLED (68B Renk)' },
+                    refreshRate: { val: 144, display: '144Hz LTPO' },
+                    peakBrightness: { val: 4000, display: '4000 nits Peak' },
+                    chipset: { display: 'Snapdragon 8 Elite (3 nm)' },
+                    ram: { val: 16, display: '16 GB / 24 GB LPDDR5X' },
+                    storage: { display: '512GB / 1TB UFS 4.1' },
+                    antutu: { val: 3250000, display: '3.250.000' },
+                    mainCamera: { display: '200 MP Sony LYT-950 1 inç Değişken Diyafram Leica' },
+                    telephoto: { display: '50 MP (3.2x) + 200 MP Periskop (5x)' },
+                    ultrawide: { display: '50 MP Leica (122°)' },
+                    frontCamera: { display: '32 MP 4K@60fps' },
+                    dxomark: { val: 169, display: '169 Puan' },
+                    battery: { val: 6000, display: '6.000 mAh' },
+                    chargingSpeed: { val: 90, display: '90W Kablolu (%100 - 24dk)' },
+                    wirelessCharging: { val: 50, display: '50W Kablosuz' },
+                    os: { display: 'Android 16, HyperOS 3' },
+                    updateSupport: { val: 5, display: '5 Yıl OS Desteği' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.4, USB 3.2, Kızılötesi' }
+                }
+            },
+            {
+                id: 'pixel-11-pro',
+                brand: 'Google',
+                name: 'Pixel 11 Pro XL',
+                price: '₺69.999 / $1,099',
+                releaseDate: 'Ağustos 2026',
+                image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80',
+                overallScore: 94,
+                pros: ['Saf Android 16 & Gelişmiş Tensor G6 AI', 'Harika Gece Çekimi ve Yazılım İşleme', '7 Yıl Güncelleme Desteği'],
+                cons: ['Oyunlarda Isınma Eğilimi'],
+                specs: {
+                    weight: { val: 215, display: '215 gram' },
+                    thickness: { val: 8.3, display: '8.3 mm' },
+                    build: { display: 'Gorilla Glass Victus 3, Mat Alüminyum' },
+                    ipRating: { display: 'IP68' },
+                    screenSize: { val: 6.8, display: '6.8 inç Super Actua OLED' },
+                    refreshRate: { val: 120, display: '1-120Hz LTPO' },
+                    peakBrightness: { val: 3300, display: '3300 nits Peak' },
+                    chipset: { display: 'Google Tensor G6 (3 nm TSMC)' },
+                    ram: { val: 16, display: '16 GB LPDDR5X' },
+                    storage: { display: '256GB / 512GB / 1TB' },
+                    antutu: { val: 2100000, display: '2.100.000' },
+                    mainCamera: { display: '50 MP f/1.6, OIS' },
+                    telephoto: { display: '48 MP Periskop (5x Optik Zoom)' },
+                    ultrawide: { display: '48 MP Macro Focus' },
+                    frontCamera: { display: '42 MP Dual PD AF' },
+                    dxomark: { val: 166, display: '166 Puan' },
+                    battery: { val: 5200, display: '5.200 mAh' },
+                    chargingSpeed: { val: 45, display: '45W Kablolu' },
+                    wirelessCharging: { val: 25, display: '25W Wireless' },
+                    os: { display: 'Saf Android 16 (Gemini Ultra Entegre)' },
+                    updateSupport: { val: 7, display: '7 Yıl Güncelleme Desteği' },
+                    connectivity: { display: 'Wi-Fi 7, UWB, Bluetooth 5.4, USB 3.2' }
+                }
+            },
+            {
+                id: 'oneplus-13-pro',
+                brand: 'OnePlus',
+                name: 'OnePlus 13 Pro',
+                price: '₺62.999 / $999',
+                releaseDate: 'Ocak 2026',
+                image: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80',
+                overallScore: 95,
+                pros: ['100W Ultra Hızlı Şarj & 6000 mAh Pil', 'Yüksek Fiyat/Performans Oranı', 'Ağır Oyunlarda Kararlı Fps'],
+                cons: ['Kablosuz Şarj Hızı Bölgeye Göre Değişiyor'],
+                specs: {
+                    weight: { val: 213, display: '213 gram' },
+                    thickness: { val: 8.5, display: '8.5 mm' },
+                    build: { display: 'Gorilla Glass Armor, Alüminyum Şasi' },
+                    ipRating: { display: 'IP69 (Sıcak Su Hüzmesine Dayanıklı)' },
+                    screenSize: { val: 6.82, display: '6.82 inç 2K ProXDR OLED' },
+                    refreshRate: { val: 120, display: '120Hz LTPO' },
+                    peakBrightness: { val: 4500, display: '4500 nits Peak' },
+                    chipset: { display: 'Snapdragon 8 Elite (3 nm)' },
+                    ram: { val: 24, display: '24 GB LPDDR5X' },
+                    storage: { display: '512GB / 1TB UFS 4.0' },
+                    antutu: { val: 3200000, display: '3.200.000' },
+                    mainCamera: { display: '50 MP Sony LYT-808 Hasselblad' },
+                    telephoto: { display: '50 MP Periskop (3x Optik, 120x Dijital)' },
+                    ultrawide: { display: '50 MP Ultra Geniş' },
+                    frontCamera: { display: '32 MP 4K Video' },
+                    dxomark: { val: 158, display: '158 Puan' },
+                    battery: { val: 6000, display: '6.000 mAh' },
+                    chargingSpeed: { val: 100, display: '100W SUPERVOOC (%100 - 22dk)' },
+                    wirelessCharging: { val: 50, display: '50W AIRVOOC' },
+                    os: { display: 'Android 16, OxygenOS 16' },
+                    updateSupport: { val: 5, display: '5 Yıl OS Desteği' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.4, USB 3.2, IR Blaster' }
+                }
+            },
+            {
+                id: 'huawei-p80-pro',
+                brand: 'Huawei',
+                name: 'Huawei P80 Pro',
+                price: '₺84.999 / $1,299',
+                releaseDate: 'Nisan 2026',
+                image: 'https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400&auto=format&fit=crop&q=80',
+                overallScore: 95,
+                pros: ['DxOMark Kamera Birincisi XMAGE', 'Kunlun Glass 3 Kırılmaz Ön Cam', 'Çift Yönlü Uydu Mesajlaşması'],
+                cons: ['Google Servisleri Doğrudan Yüklü Gelmiyor'],
+                specs: {
+                    weight: { val: 220, display: '220 gram' },
+                    thickness: { val: 8.3, display: '8.3 mm' },
+                    build: { display: 'Sentetik Deri / Dayanıklı Kunlun Glass 3' },
+                    ipRating: { display: 'IP68 (2m / 30dk)' },
+                    screenSize: { val: 6.8, display: '6.8 inç Quad-Curved LTPO OLED' },
+                    refreshRate: { val: 120, display: '120Hz' },
+                    peakBrightness: { val: 3000, display: '3000 nits' },
+                    chipset: { display: 'Kirin 9100 5G (5 nm)' },
+                    ram: { val: 16, display: '16 GB' },
+                    storage: { display: '512GB / 1TB' },
+                    antutu: { val: 1850000, display: '1.850.000' },
+                    mainCamera: { display: '50 MP XMAGE 1 inç Pop-up Mekanizmalı f/1.4-f/4.0' },
+                    telephoto: { display: '64 MP Makro Telefoto (3.5x Optik, 100x Dijital)' },
+                    ultrawide: { display: '48 MP Ultra Geniş' },
+                    frontCamera: { display: '13 MP Ultra Geniş AF' },
+                    dxomark: { val: 172, display: '172 Puan (DxOMark #1)' },
+                    battery: { val: 5500, display: '5.500 mAh' },
+                    chargingSpeed: { val: 100, display: '100W SuperCharge' },
+                    wirelessCharging: { val: 80, display: '80W Kablosuz SuperCharge' },
+                    os: { display: 'HarmonyOS NEXT / HarmonyOS 5' },
+                    updateSupport: { val: 5, display: '5 Yıl Güncelleme' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.2, Çift Yönlü Uydu Haberleşmesi' }
+                }
+            }
+        ];
+
+        // --- 2. State Management ---
+        let selectedPhoneIds = ['iphone-18-pro-max', 's26-ultra', 'xiaomi-18-pro-max'];
+        let favorites = JSON.parse(localStorage.getItem('teleKiyas_favorites')) || [];
+        let targetSlotIndex = null;
+        let currentBrandFilter = 'Tümü';
+
+        // --- 3. Core Render Engine ---
+        function renderComparison() {
+            const container = document.getElementById('comparison-container');
+            const showHighlights = document.getElementById('toggle-highlights').checked;
+            const onlyDifferences = document.getElementById('toggle-diff').checked;
+
+            const selectedPhones = selectedPhoneIds.map(id => phoneDatabase.find(p => p.id === id) || null);
+            const activeCount = selectedPhones.filter(Boolean).length;
+
+            if (activeCount === 0) {
+                container.innerHTML = `
+                    <div class="p-12 text-center text-slate-400">
+                        <i class="fa-solid fa-mobile-screen-button text-5xl mb-4 text-slate-600 block"></i>
+                        <p class="font-bold text-lg text-slate-200">Karşılaştırma alanında cihaz bulunmuyor.</p>
+                        <p class="text-xs text-slate-400 mt-1">Devam etmek için aşağıdaki buton ile en az 1 telefon ekleyin.</p>
+                        <button onclick="openSearchModal(0)" class="mt-5 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-brand-600/30 transition-all">
+                            <i class="fa-solid fa-plus mr-1.5"></i> Cihaz Seç & Ekle
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const specCategories = [
+                {
+                    title: '📱 Ekran & Tasarım',
+                    keys: [
+                        { label: 'Ağırlık', key: 'weight', higherIsBetter: false },
+                        { label: 'Kalınlık', key: 'thickness', higherIsBetter: false },
+                        { label: 'Gövde & Malzeme', key: 'build' },
+                        { label: 'Su/Toz Dayanıklılığı', key: 'ipRating' },
+                        { label: 'Ekran Boyutu & Panel', key: 'screenSize', higherIsBetter: true },
+                        { label: 'Yenileme Hızı', key: 'refreshRate', higherIsBetter: true },
+                        { label: 'Maksimum Parlaklık', key: 'peakBrightness', higherIsBetter: true },
+                    ]
+                },
+                {
+                    title: '⚡ Performans & Donanım',
+                    keys: [
+                        { label: 'İşlemci (Chipset)', key: 'chipset' },
+                        { label: 'Sistem Belleği (RAM)', key: 'ram', higherIsBetter: true },
+                        { label: 'Dahili Depolama', key: 'storage' },
+                        { label: 'AnTuTu v10 Skoru', key: 'antutu', higherIsBetter: true },
+                    ]
+                },
+                {
+                    title: '📸 Kamera Sistemi',
+                    keys: [
+                        { label: 'Ana Kamera', key: 'mainCamera' },
+                        { label: 'Telefoto / Periskop', key: 'telephoto' },
+                        { label: 'Ultra Geniş Açılı', key: 'ultrawide' },
+                        { label: 'Ön (Selfie) Kamera', key: 'frontCamera' },
+                        { label: 'DxOMark Kamera Puanı', key: 'dxomark', higherIsBetter: true },
+                    ]
+                },
+                {
+                    title: '🔋 Batarya & Şarj Hızı',
+                    keys: [
+                        { label: 'Pil Kapasitesi', key: 'battery', higherIsBetter: true },
+                        { label: 'Kablolu Hızlı Şarj', key: 'chargingSpeed', higherIsBetter: true },
+                        { label: 'Kablosuz Şarj', key: 'wirelessCharging', higherIsBetter: true },
+                    ]
+                },
+                {
+                    title: '🌐 Yazılım & Bağlantı',
+                    keys: [
+                        { label: 'İşletim Sistemi', key: 'os' },
+                        { label: 'Güncelleme Desteği', key: 'updateSupport', higherIsBetter: true },
+                        { label: 'Kablosuz & Ekstra', key: 'connectivity' },
+                    ]
+                }
+            ];
+
+            let html = `<table class="w-full text-left border-collapse min-w-[750px]">`;
+
+            // HEADER ROW
+            html += `<thead class="sticky-device-header bg-darkcard/95 backdrop-blur-md border-b border-darkborder shadow-md"><tr>`;
+            html += `<th class="p-4 w-48 sm:w-64 min-w-[180px] bg-darkcard font-bold text-slate-400 text-xs uppercase tracking-wider">Cihazlar (${activeCount}/4)</th>`;
+
+            for (let i = 0; i < 4; i++) {
+                const phone = selectedPhones[i];
+                if (phone) {
+                    const isFav = favorites.includes(phone.id);
+                    html += `
+                        <th class="p-4 w-64 min-w-[220px] align-top relative group border-l border-darkborder/50 bg-darkcard">
+                            <div class="absolute top-3 right-3 flex items-center space-x-1.5 no-print">
+                                <button onclick="toggleFavorite('${phone.id}')" class="p-1 text-slate-400 hover:text-amber-400 transition-colors" title="Favorilere Ekle">
+                                    <i class="fa-${isFav ? 'solid' : 'regular'} fa-star ${isFav ? 'text-amber-400' : ''}"></i>
+                                </button>
+                                <button onclick="removePhoneSlot(${i})" class="p-1 text-slate-500 hover:text-rose-400 transition-colors" title="Kaldır">
+                                    <i class="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="flex flex-col items-center text-center">
+                                <div onclick="openDetailModal('${phone.id}')" class="cursor-pointer overflow-hidden rounded-2xl mb-3 border border-slate-800 bg-slate-900/80 p-2 group-hover:border-brand-500/50 transition-all">
+                                    <img src="${phone.image}" alt="${phone.name}" class="h-28 w-24 object-cover rounded-xl transition-transform group-hover:scale-105">
+                                </div>
+                                <span class="text-[10px] font-extrabold text-brand-400 uppercase tracking-widest">${phone.brand}</span>
+                                <h4 onclick="openDetailModal('${phone.id}')" class="font-bold text-sm text-white line-clamp-1 mt-0.5 hover:text-brand-400 cursor-pointer transition-colors">${phone.name}</h4>
+                                <span class="text-xs font-bold text-emerald-400 mt-1">${phone.price}</span>
+                                
+                                <div class="mt-2.5 flex items-center justify-center space-x-1 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
+                                    <i class="fa-solid fa-star text-amber-400 text-[11px]"></i>
+                                    <span class="text-xs font-extrabold text-slate-200">${phone.overallScore} / 100</span>
+                                </div>
+
+                                <button onclick="openSearchModal(${i})" class="mt-2 text-[11px] text-slate-400 hover:text-white underline decoration-dashed no-print">
+                                    Değiştir
+                                </button>
+                            </div>
+                        </th>
+                    `;
+                } else {
+                    html += `
+                        <th class="p-4 w-64 min-w-[220px] align-middle text-center border-l border-darkborder/50 bg-slate-900/30 no-print">
+                            <button onclick="openSearchModal(${i})" class="w-full py-8 border-2 border-dashed border-slate-700 hover:border-brand-500/60 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:text-brand-400 transition-all group">
+                                <i class="fa-solid fa-plus text-2xl mb-1.5 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-xs font-bold">+ Cihaz Ekle</span>
+                            </button>
+                        </th>
+                    `;
+                }
+            }
+            html += `</tr></thead>`;
+
+            // BODY ROWS
+            html += `<tbody class="divide-y divide-darkborder">`;
+
+            specCategories.forEach(cat => {
+                html += `
+                    <tr class="bg-slate-900/90">
+                        <td colspan="5" class="py-3 px-4 font-bold text-xs uppercase tracking-wider text-brand-400 border-y border-darkborder">
+                            ${cat.title}
+                        </td>
+                    </tr>
+                `;
+
+                cat.keys.forEach(spec => {
+                    const phoneValues = selectedPhones.map(p => p ? p.specs[spec.key] : null);
+
+                    if (onlyDifferences) {
+                        const validDisplays = phoneValues.filter(Boolean).map(v => v.display);
+                        const allSame = validDisplays.every(val => val === validDisplays[0]);
+                        if (allSame && validDisplays.length > 1) return;
+                    }
+
+                    let winningIndex = -1;
+                    if (showHighlights && spec.higherIsBetter !== undefined) {
+                        let bestVal = spec.higherIsBetter ? -Infinity : Infinity;
+                        phoneValues.forEach((valObj, idx) => {
+                            if (valObj && valObj.val !== undefined && valObj.val !== null) {
+                                if (spec.higherIsBetter ? (valObj.val > bestVal) : (valObj.val < bestVal)) {
+                                    bestVal = valObj.val;
+                                    winningIndex = idx;
+                                }
+                            }
+                        });
+                    }
+
+                    html += `<tr class="spec-row transition-colors">`;
+                    html += `<td class="py-3.5 px-4 text-xs font-bold text-slate-300 w-48 sm:w-64 border-r border-darkborder/40">${spec.label}</td>`;
+
+                    for (let i = 0; i < 4; i++) {
+                        const valObj = phoneValues[i];
+                        const isWinner = (i === winningIndex);
+
+                        if (selectedPhones[i]) {
+                            html += `
+                                <td class="py-3.5 px-4 text-xs text-slate-200 border-r border-darkborder/40 font-medium ${isWinner ? 'bg-emerald-500/10 text-emerald-300 font-semibold' : ''}">
+                                    <div class="flex items-center justify-between">
+                                        <span>${valObj ? valObj.display : '-'}</span>
+                                        ${isWinner ? `<span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30 ml-1 flex items-center shrink-0"><i class="fa-solid fa-crown text-[9px] mr-1"></i> EN İYİ</span>` : ''}
+                                    </div>
+                                </td>
+                            `;
+                        } else {
+                            html += `<td class="py-3.5 px-4 border-r border-darkborder/40 bg-slate-900/10 no-print"></td>`;
+                        }
+                    }
+                    html += `</tr>`;
+                });
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            updateFavCountUI();
+        }
+
+        // --- 4. Search & Filter Modal Logic ---
+        function openSearchModal(slotIndex) {
+            targetSlotIndex = slotIndex;
+            document.getElementById('search-modal').classList.remove('hidden');
+            document.getElementById('phone-search-input').value = '';
+            document.getElementById('phone-search-input').focus();
+            filterBrand('Tümü');
+        }
+
+        function closeSearchModal() {
+            document.getElementById('search-modal').classList.add('hidden');
+        }
+
+        function filterBrand(brand) {
+            currentBrandFilter = brand;
+            document.querySelectorAll('.brand-pill').forEach(btn => {
+                if (btn.textContent === brand) {
+                    btn.className = "brand-pill active px-3 py-1.5 rounded-xl bg-brand-600 text-white font-semibold transition-all";
+                } else {
+                    btn.className = "brand-pill px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all";
+                }
+            });
+            filterPhonesList();
+        }
+
+        function filterPhonesList() {
+            const query = document.getElementById('phone-search-input').value.toLowerCase();
+            const listContainer = document.getElementById('phone-results-list');
+
+            const filtered = phoneDatabase.filter(phone => {
+                const matchesBrand = currentBrandFilter === 'Tümü' || phone.brand === currentBrandFilter;
+                const matchesSearch = phone.name.toLowerCase().includes(query) || phone.brand.toLowerCase().includes(query);
+                return matchesBrand && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="col-span-2 py-8 text-center text-slate-400 text-xs">Arama kriterlerinize uygun telefon bulunamadı.</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = filtered.map(phone => {
+                const isAlreadySelected = selectedPhoneIds.includes(phone.id);
+                return `
+                    <div onclick="${isAlreadySelected ? '' : `selectPhoneForSlot('${phone.id}')`}" class="p-3 bg-darkbg border border-darkborder rounded-2xl flex items-center justify-between cursor-pointer hover:border-brand-500 transition-all ${isAlreadySelected ? 'opacity-40 cursor-not-allowed' : ''}">
+                        <div class="flex items-center space-x-3">
+                            <img src="${phone.image}" alt="${phone.name}" class="w-10 h-12 object-cover rounded-lg">
+                            <div>
+                                <span class="text-[10px] font-bold text-brand-400 uppercase">${phone.brand}</span>
+                                <h5 class="text-xs font-bold text-white">${phone.name}</h5>
+                                <span class="text-[11px] text-slate-400">${phone.price}</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold ${isAlreadySelected ? 'text-slate-500' : 'text-brand-400'}">
+                            ${isAlreadySelected ? 'Eklendi' : '<i class="fa-solid fa-plus-circle text-lg"></i>'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectPhoneForSlot(phoneId) {
+            if (targetSlotIndex !== null && targetSlotIndex >= 0 && targetSlotIndex < 4) {
+                selectedPhoneIds[targetSlotIndex] = phoneId;
+            } else {
+                const emptyIdx = selectedPhoneIds.findIndex(id => id === null);
+                if (emptyIdx !== -1) selectedPhoneIds[emptyIdx] = phoneId;
+                else selectedPhoneIds[0] = phoneId;
+            }
+            closeSearchModal();
+            renderComparison();
+            showToast('Cihaz karşılaştırma listesine eklendi!');
+        }
+
+        function removePhoneSlot(index) {
+            selectedPhoneIds[index] = null;
+            renderComparison();
+        }
+
+        function resetComparison() {
+            selectedPhoneIds = [null, null, null, null];
+            renderComparison();
+            showToast('Karşılaştırma tablosu sıfırlandı.');
+        }
+
+        function loadPreset(ids) {
+            selectedPhoneIds = [null, null, null, null];
+            ids.forEach((id, idx) => {
+                if (idx < 4) selectedPhoneIds[idx] = id;
+            });
+            renderComparison();
+            showToast('Hazır paket yüklendi!');
+        }
+
+        // --- 5. Detail Modal Logic ---
+        function openDetailModal(phoneId) {
+            const phone = phoneDatabase.find(p => p.id === phoneId);
+            if (!phone) return;
+
+            const modalContent = document.getElementById('detail-modal-content');
+            modalContent.innerHTML = `
+                <div class="p-5 border-b border-darkborder flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-md border border-brand-500/30">${phone.brand}</span>
+                        <h3 class="font-bold text-lg text-white">${phone.name} İnceleme & Detay</h3>
+                    </div>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white transition-colors p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh] space-y-6">
+                    <div class="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+                        <img src="${phone.image}" alt="${phone.name}" class="w-36 h-44 object-cover rounded-2xl border border-slate-700 shadow-xl">
+                        <div class="flex-1 space-y-2">
+                            <h4 class="text-xl font-extrabold text-white">${phone.name}</h4>
+                            <p class="text-sm font-semibold text-emerald-400">${phone.price} <span class="text-xs text-slate-400 font-normal">(${phone.releaseDate})</span></p>
+                            
+                            <div class="flex items-center space-x-2 pt-1">
+                                <span class="text-xs font-bold text-slate-300">TeleKıyas Puanı:</span>
+                                <span class="text-xs font-black bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg border border-emerald-500/30">${phone.overallScore} / 100</span>
+                            </div>
+
+                            <div class="pt-3 grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                                    <span class="text-slate-400 block text-[10px]">İşlemci</span>
+                                    <span class="font-bold text-slate-200">${phone.specs.chipset.display}</span>
+                                </div>
+                                <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                                    <span class="text-slate-400 block text-[10px]">Batarya & Şarj</span>
+                                    <span class="font-bold text-slate-200">${phone.specs.battery.display} - ${phone.specs.chargingSpeed.display}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PROS & CONS -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                            <h5 class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider mb-2 flex items-center">
+                                <i class="fa-solid fa-thumbs-up mr-2"></i> Öne Çıkan Artıları
+                            </h5>
+                            <ul class="space-y-1.5 text-xs text-slate-300">
+                                ${(phone.pros || ['Üst Düzey Donanım', 'Uzun Güncelleme Desteği']).map(p => `<li class="flex items-center"><i class="fa-solid fa-check text-emerald-400 text-[10px] mr-2"></i>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4">
+                            <h5 class="text-xs font-extrabold text-rose-400 uppercase tracking-wider mb-2 flex items-center">
+                                <i class="fa-solid fa-thumbs-down mr-2"></i> Dikkat Çeken Eksileri
+                            </h5>
+                            <ul class="space-y-1.5 text-xs text-slate-300">
+                                ${(phone.cons || ['Yüksek Fiyat Etiketi']).map(c => `<li class="flex items-center"><i class="fa-solid fa-xmark text-rose-400 text-[10px] mr-2"></i>${c}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        // --- 6. Custom Phone Creator Modal ---
+        function openCustomPhoneModal() {
+            document.getElementById('custom-phone-modal').classList.remove('hidden');
+        }
+        function closeCustomPhoneModal() {
+            document.getElementById('custom-phone-modal').classList.add('hidden');
+        }
+
+        function handleCustomPhoneSubmit(e) {
+            e.preventDefault();
+            const brand = document.getElementById('cust-brand').value || 'Özel';
+            const name = document.getElementById('cust-name').value || 'Yeni Cihaz';
+            const price = document.getElementById('cust-price').value || '₺0';
+            const chipset = document.getElementById('cust-chipset').value || 'Bilinmiyor';
+            const ram = parseInt(document.getElementById('cust-ram').value) || 12;
+            const battery = parseInt(document.getElementById('cust-battery').value) || 5000;
+            const screen = document.getElementById('cust-screen').value || '6.7 inç OLED';
+            const camera = document.getElementById('cust-camera').value || '50 MP';
+            const antutu = parseInt(document.getElementById('cust-antutu').value) || 2000000;
+            const charge = parseInt(document.getElementById('cust-charge').value) || 60;
+
+            const customId = 'custom-' + Date.now();
+            const newPhone = {
+                id: customId,
+                brand: brand,
+                name: name,
+                price: price,
+                releaseDate: '2026',
+                image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80',
+                overallScore: 90,
+                pros: ['Özel Eklenen Cihaz Verisi'],
+                cons: ['Deneysel Veri'],
+                specs: {
+                    weight: { val: 200, display: '200 gram' },
+                    thickness: { val: 8.0, display: '8.0 mm' },
+                    build: { display: 'Alüminyum & Cam' },
+                    ipRating: { display: 'IP68' },
+                    screenSize: { val: 6.7, display: screen },
+                    refreshRate: { val: 120, display: '120Hz' },
+                    peakBrightness: { val: 2500, display: '2500 nits' },
+                    chipset: { display: chipset },
+                    ram: { val: ram, display: `${ram} GB` },
+                    storage: { display: '256 GB / 512 GB' },
+                    antutu: { val: antutu, display: `${antutu.toLocaleString('tr-TR')}` },
+                    mainCamera: { display: camera },
+                    telephoto: { display: 'Var' },
+                    ultrawide: { display: '12 MP' },
+                    frontCamera: { display: '16 MP' },
+                    dxomark: { val: 145, display: '145 Puan' },
+                    battery: { val: battery, display: `${battery} mAh` },
+                    chargingSpeed: { val: charge, display: `${charge}W Hızlı Şarj` },
+                    wirelessCharging: { val: 15, display: '15W Wireless' },
+                    os: { display: 'Android 16' },
+                    updateSupport: { val: 4, display: '4 Yıl' },
+                    connectivity: { display: 'Wi-Fi 7, Bluetooth 5.4, 5G' }
+                }
+            };
+
+            phoneDatabase.unshift(newPhone);
+            selectPhoneForSlot(customId);
+            closeCustomPhoneModal();
+            showToast('Özel cihaz oluşturuldu ve karşılaştırmaya eklendi!');
+        }
+
+        // --- 7. Favorites & Utilities ---
+        function toggleFavorite(phoneId) {
+            const idx = favorites.indexOf(phoneId);
+            if (idx > -1) {
+                favorites.splice(idx, 1);
+                showToast('Favorilerden çıkarıldı.');
+            } else {
+                favorites.push(phoneId);
+                showToast('Favorilere eklendi!');
+            }
+            localStorage.setItem('teleKiyas_favorites', JSON.stringify(favorites));
+            renderComparison();
+        }
+
+        function toggleFavoritesView() {
+            if (favorites.length === 0) {
+                showToast('Henüz favori cihaz eklemediniz.');
+                return;
+            }
+            loadPreset(favorites);
+            showToast('Favori cihazlarınız yüklendi!');
+        }
+
+        function updateFavCountUI() {
+            const el = document.getElementById('fav-count');
+            if (el) el.textContent = favorites.length;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        function shareComparison() {
+            const active = selectedPhoneIds.filter(Boolean);
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(window.location.href);
+            }
+            showToast(`Karşılaştırma adresi kopyalandı! (${active.length} cihaz)`);
+        }
+
+        // --- Initialize ---
+        window.onload = function() {
+            renderComparison();
+        };
+    </script>
+</body>
+</html>
